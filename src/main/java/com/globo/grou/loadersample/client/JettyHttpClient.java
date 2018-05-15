@@ -29,7 +29,7 @@ public class JettyHttpClient {
         HTTP2Client h2Client = new HTTP2Client();
         h2Client.setExecutor(executor);
         HttpClientTransportOverHTTP2 transport = new HttpClientTransportOverHTTP2(h2Client);
-        
+
         SslContextFactory sslContextFactory = new SslContextFactory(true);
 
         final HttpClient httpClient = new HttpClient(transport, sslContextFactory);
@@ -48,6 +48,7 @@ public class JettyHttpClient {
         IntStream.rangeClosed(1, 100).parallel().forEach(x -> httpClient.newRequest(uri)
                     .version(HttpVersion.HTTP_2)
                     .listener(new Request.Listener.Adapter() {
+
                         @Override
                         public void onQueued(Request request) {
                             counter.incrementAndGet();
@@ -67,13 +68,13 @@ public class JettyHttpClient {
                     .onResponseContent((response, content) -> {
                         if (LOGGER.isDebugEnabled()) {
                             int status = response.getStatus();
-                            LOGGER.info("status : " + status);
-                            LOGGER.info("version : " + response.getVersion().asString());
-                            //log.info("TLS Protocols : " + Stream.of(r.sslParameters().getProtocols()).collect(Collectors.joining(",")));
-                            //log.info("Cyphers : " + Stream.of(r.sslParameters().getCipherSuites()).collect(Collectors.joining(",")));
-                            LOGGER.info(new String(content.array()));
+                            String version = response.getVersion().asString();
+                            String body = new String(content.array());
+
+                            LOGGER.debug("status : " + status);
+                            LOGGER.debug("version : " + version);
+                            LOGGER.debug(body);
                         }
-                        LOGGER.warn(">> " + x);
                     }).send(result -> {})
         );
         long interval = System.currentTimeMillis() - start;
